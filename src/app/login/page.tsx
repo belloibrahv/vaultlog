@@ -101,16 +101,6 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
-
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-center text-gray-600 text-xs leading-relaxed">
-              <span className="font-semibold text-gray-700">Demo Credentials:</span>
-              <br />
-              Email: admin@vaultlog.local
-              <br />
-              Password: admin123
-            </p>
-          </div>
         </div>
       </div>
     </div>
