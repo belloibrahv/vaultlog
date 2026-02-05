@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import Link from "next/link";
+import { LoadingShell } from "@/components/LoadingShell";
 
 interface Task {
   id: string;
@@ -55,9 +56,10 @@ export default function TasksPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <LoadingShell
+        title="Tasks"
+        subtitle="Manage and track all service tasks"
+      />
     );
   }
 

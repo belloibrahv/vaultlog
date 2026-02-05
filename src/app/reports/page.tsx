@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
+import { LoadingShell } from "@/components/LoadingShell";
 
 interface ReportData {
   clientName: string;
@@ -84,9 +85,10 @@ export default function ReportsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <LoadingShell
+        title="Reports"
+        subtitle="View client performance and billing reports"
+      />
     );
   }
 

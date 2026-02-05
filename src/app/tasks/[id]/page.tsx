@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
+import { LoadingShell } from "@/components/LoadingShell";
 
 interface Task {
   id: string;
@@ -151,9 +152,10 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <LoadingShell
+        title="Task Details"
+        subtitle="Loading task information"
+      />
     );
   }
 
@@ -395,7 +397,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">Activity Log</h2>
               </div>
-              
+
               <div className="space-y-4">
                 {task.activityLogs.length === 0 ? (
                   <div className="text-center py-8">
@@ -407,45 +409,92 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                 ) : (
                   <div className="relative">
                     {/* Timeline line */}
-                    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 to-gray-200"></div>
-                    
+                    <div className="absolute left-3 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-gray-200 to-gray-100"></div>
+
                     {/* Activity items */}
                     <div className="space-y-4">
-                      {task.activityLogs.map((log, index) => {
-                        const activityTypeConfig: Record<string, { color: string; bgColor: string; icon: string }> = {
-                          TASK_CREATED: { color: "text-green-700", bgColor: "bg-green-100", icon: "✓" },
-                          STATUS_CHANGED: { color: "text-blue-700", bgColor: "bg-blue-100", icon: "→" },
-                          TASK_UPDATED: { color: "text-purple-700", bgColor: "bg-purple-100", icon: "◆" },
-                          TASK_ASSIGNED: { color: "text-orange-700", bgColor: "bg-orange-100", icon: "👤" },
-                          TIME_LOGGED: { color: "text-cyan-700", bgColor: "bg-cyan-100", icon: "⏱" },
+                      {task.activityLogs.map((log) => {
+                        const activityTypeConfig: Record<
+                          string,
+                          {
+                            label: string;
+                            badge: string;
+                            dot: string;
+                            border: string;
+                          }
+                        > = {
+                          TASK_CREATED: {
+                            label: "Task created",
+                            badge: "bg-green-50 text-green-700 border-green-200",
+                            dot: "bg-green-500",
+                            border: "border-green-200",
+                          },
+                          STATUS_CHANGED: {
+                            label: "Status changed",
+                            badge: "bg-blue-50 text-blue-700 border-blue-200",
+                            dot: "bg-blue-500",
+                            border: "border-blue-200",
+                          },
+                          TASK_UPDATED: {
+                            label: "Task updated",
+                            badge: "bg-amber-50 text-amber-700 border-amber-200",
+                            dot: "bg-amber-500",
+                            border: "border-amber-200",
+                          },
+                          TASK_ASSIGNED: {
+                            label: "Task assigned",
+                            badge: "bg-purple-50 text-purple-700 border-purple-200",
+                            dot: "bg-purple-500",
+                            border: "border-purple-200",
+                          },
+                          TIME_LOGGED: {
+                            label: "Time logged",
+                            badge: "bg-cyan-50 text-cyan-700 border-cyan-200",
+                            dot: "bg-cyan-500",
+                            border: "border-cyan-200",
+                          },
                         };
-                        
-                        const config = activityTypeConfig[log.activityType] || { color: "text-gray-700", bgColor: "bg-gray-100", icon: "•" };
-                        
+
+                        const config = activityTypeConfig[log.activityType] || {
+                          label: "Activity",
+                          badge: "bg-gray-50 text-gray-700 border-gray-200",
+                          dot: "bg-gray-400",
+                          border: "border-gray-200",
+                        };
+
                         return (
-                          <div key={log.id} className="flex gap-4 pl-4">
-                            {/* Timeline dot */}
-                            <div className="flex flex-col items-center">
-                              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm ${config.bgColor} ${config.color} border-4 border-white shadow-sm`}>
-                                {config.icon}
-                              </div>
-                            </div>
-                            
-                            {/* Content */}
-                            <div className="flex-1 pt-1">
-                              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div>
-                                    <p className="font-semibold text-gray-900">{log.user?.name || "Unknown User"}</p>
-                                    <p className="text-sm text-gray-600 mt-1">{log.description}</p>
-                                  </div>
-                                  <span className={`text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-2 ${config.bgColor} ${config.color}`}>
-                                    {log.activityType.replace(/_/g, " ")}
-                                  </span>
+                          <div key={log.id} className="relative pl-10">
+                            <div
+                              className={`absolute left-[6px] top-5 h-3 w-3 rounded-full ${config.dot} ring-4 ring-white`}
+                            />
+
+                            <div
+                              className={`bg-white rounded-lg border ${config.border} shadow-sm px-5 py-4`}
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {config.label}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {log.description}
+                                  </p>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-3">
+                                <span
+                                  className={`text-xs font-semibold px-3 py-1 rounded-full border ${config.badge}`}
+                                >
+                                  {log.activityType.replace(/_/g, " ")}
+                                </span>
+                              </div>
+
+                              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                <span className="font-semibold text-gray-700">
+                                  {log.user?.name || "Unknown User"}
+                                </span>
+                                <span className="h-3 w-px bg-gray-300"></span>
+                                <time dateTime={new Date(log.createdAt).toISOString()}>
                                   {new Date(log.createdAt).toLocaleString()}
-                                </p>
+                                </time>
                               </div>
                             </div>
                           </div>

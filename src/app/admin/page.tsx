@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
+import { LoadingShell } from "@/components/LoadingShell";
 
 interface User {
   id: string;
@@ -100,9 +101,10 @@ export default function AdminPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <LoadingShell
+        title="Admin"
+        subtitle="Manage team members and access"
+      />
     );
   }
 
