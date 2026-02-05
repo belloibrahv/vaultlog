@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 
 export const authOptions = {
   providers: [
@@ -79,5 +79,5 @@ const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
 
 export async function auth() {
-  return await getServerSession(authOptions);
+  return (await getServerSession(authOptions)) as Session | null;
 }
