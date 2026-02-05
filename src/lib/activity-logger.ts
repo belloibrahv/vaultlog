@@ -6,7 +6,7 @@ export async function logActivity(
   userId: string,
   activityType: "TASK_CREATED" | "TASK_UPDATED" | "TASK_ASSIGNED" | "TASK_COMPLETED" | "TIME_LOGGED" | "ATTACHMENT_ADDED" | "STATUS_CHANGED",
   description: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) {
   try {
     await db.insert(activityLogs).values({

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { tasks, clients, activityLogs } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { tasks, activityLogs } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -24,7 +24,10 @@ const createTaskSchema = z.object({
   description: z.string().optional().nullable(),
   category: z.string().min(1),
   priority: prioritySchema.optional(),
-  assignedToId: z.string().uuid().optional().nullable(),
+  assignedToId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().uuid().optional().nullable()
+  ),
 });
 
 export async function GET(request: NextRequest) {

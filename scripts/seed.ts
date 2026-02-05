@@ -24,7 +24,7 @@ async function seed() {
     } else {
       // Create manager user
       const managerPassword = await bcrypt.hash("manager123", 10);
-      const managerUser = await db.insert(users).values({
+      await db.insert(users).values({
         email: "manager@vaultlog.local",
         name: "John Manager",
         password: managerPassword,

@@ -46,8 +46,8 @@ export default function ReportsPage() {
         // Group by client
         const clientMap = new Map<string, ReportData>();
 
-        tasks.forEach((task: any) => {
-          const key = task.client.name;
+        tasks.forEach((task: Record<string, unknown>) => {
+          const key = (task.client as Record<string, unknown>).name as string;
           if (!clientMap.has(key)) {
             clientMap.set(key, {
               clientName: key,
@@ -63,13 +63,13 @@ export default function ReportsPage() {
           }
         });
 
-        timeLogs.forEach((log: any) => {
-          const task = tasks.find((t: any) => t.id === log.taskId);
+        timeLogs.forEach((log: Record<string, unknown>) => {
+          const task = tasks.find((t: Record<string, unknown>) => t.id === log.taskId);
           if (task) {
-            const key = task.client.name;
+            const key = (task.client as Record<string, unknown>).name as string;
             const data = clientMap.get(key);
             if (data) {
-              data.totalHours += parseFloat(log.duration);
+              data.totalHours += parseFloat(log.duration as string);
             }
           }
         });

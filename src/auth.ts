@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type AuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { getServerSession, type Session } from "next-auth";
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     Credentials({
       credentials: {
@@ -49,17 +49,17 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        (token as Record<string, unknown>).id = (user as unknown as Record<string, unknown>).id;
+        (token as Record<string, unknown>).role = (user as unknown as Record<string, unknown>).role;
       }
       return token;
     },
-    async session({ session, token }: any) {
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        (session.user as Record<string, unknown>).id = (token as Record<string, unknown>).id;
+        (session.user as Record<string, unknown>).role = (token as Record<string, unknown>).role;
       }
       return session;
     },
@@ -68,11 +68,11 @@ export const authOptions = {
     signIn: "/login",
   },
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
-} as any;
+};
 
 const handler = NextAuth(authOptions);
 

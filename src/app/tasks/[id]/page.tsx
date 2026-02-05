@@ -63,18 +63,6 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     priority: "",
   });
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      redirect("/login");
-    }
-  }, [status]);
-
-  useEffect(() => {
-    if (session && id) {
-      fetchTask();
-    }
-  }, [session, id]);
-
   const fetchTask = async () => {
     try {
       const res = await fetch(`/api/tasks/${id}`);
@@ -95,6 +83,18 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      redirect("/login");
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (session && id) {
+      void fetchTask();
+    }
+  }, [session, id]);
 
   const handleTimeLogSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

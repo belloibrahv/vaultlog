@@ -8,7 +8,6 @@ import {
   decimal,
   pgEnum,
   index,
-  foreignKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 

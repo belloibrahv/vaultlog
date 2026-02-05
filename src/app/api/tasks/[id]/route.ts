@@ -10,7 +10,10 @@ const updateTaskSchema = z.object({
     .enum(["NEW", "IN_PROGRESS", "BLOCKED", "COMPLETED", "ARCHIVED"])
     .optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
-  assignedToId: z.string().uuid().optional().nullable(),
+  assignedToId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().uuid().optional().nullable()
+  ),
   description: z.string().optional().nullable(),
 });
 
@@ -116,15 +119,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (status !== undefined) updateData.status = status;
+    if (priority !== undefined) updateData.priority = priority;
+    if (description !== undefined) updateData.description = description;
+    if (assignedToId !== undefined) {
+      updateData.assignedToId = assignedToId || null;
+    }
+
     const updated = await db
       .update(tasks)
-      .set({
-        status,
-        priority,
-        assignedToId: assignedToId || null,
-        description,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(tasks.id, id))
       .returning();
 
@@ -153,7 +161,7 @@ export async function PATCH(
     }
 
     // Log activity for assignment change
-    if (assignedToId && assignedToId !== currentTask.assignedToId) {
+    if (assignedToId !== undefined && assignedToId !== currentTask.assignedToId) {
       await db.insert(activityLogs).values({
         taskId: id,
         userId: session.user.id,
