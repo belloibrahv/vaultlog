@@ -3,6 +3,29 @@ import { db } from "@/db";
 import { tasks, clients, activityLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const taskStatusSchema = z.enum([
+  "NEW",
+  "IN_PROGRESS",
+  "BLOCKED",
+  "COMPLETED",
+  "ARCHIVED",
+]);
+const prioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
+const taskQuerySchema = z.object({
+  clientId: z.string().uuid().optional(),
+  status: taskStatusSchema.optional(),
+  assignedTo: z.string().uuid().optional(),
+});
+const createTaskSchema = z.object({
+  clientId: z.string().uuid(),
+  title: z.string().min(1),
+  description: z.string().optional().nullable(),
+  category: z.string().min(1),
+  priority: prioritySchema.optional(),
+  assignedToId: z.string().uuid().optional().nullable(),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,11 +33,24 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!["ADMIN", "MANAGER", "STAFF"].includes(session.user?.role || "")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const searchParams = request.nextUrl.searchParams;
-    const clientId = searchParams.get("clientId");
-    const status = searchParams.get("status");
-    const assignedTo = searchParams.get("assignedTo");
+    const rawQuery = {
+      clientId: searchParams.get("clientId") || undefined,
+      status: searchParams.get("status") || undefined,
+      assignedTo: searchParams.get("assignedTo") || undefined,
+    };
+    const parsedQuery = taskQuerySchema.safeParse(rawQuery);
+    if (!parsedQuery.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters" },
+        { status: 400 }
+      );
+    }
+    const { clientId, status, assignedTo } = parsedQuery.data;
 
     let query = db.query.tasks.findMany({
       with: {
@@ -26,6 +62,9 @@ export async function GET(request: NextRequest) {
 
     // Build filters based on role
     if (session.user?.role === "STAFF") {
+      if (assignedTo && assignedTo !== session.user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       // Staff can only see tasks assigned to them
       query = db.query.tasks.findMany({
         where: eq(tasks.assignedToId, session.user.id),
@@ -69,14 +108,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, title, description, category, priority, assignedToId } = body;
-
-    if (!clientId || !title || !category) {
+    const parsedBody = createTaskSchema.safeParse(body);
+    if (!parsedBody.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid request body" },
         { status: 400 }
       );
     }
+    const { clientId, title, description, category, priority, assignedToId } =
+      parsedBody.data;
+
+    const normalizedAssignedToId =
+      assignedToId && assignedToId.length > 0 ? assignedToId : undefined;
 
     const newTask = await db.insert(tasks).values({
       clientId,
@@ -85,7 +128,7 @@ export async function POST(request: NextRequest) {
       category,
       priority: priority || "MEDIUM",
       createdById: session.user.id,
-      assignedToId,
+      assignedToId: normalizedAssignedToId,
     }).returning();
 
     // Log activity

@@ -3,6 +3,16 @@ import { db } from "@/db";
 import { tasks, activityLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const updateTaskSchema = z.object({
+  status: z
+    .enum(["NEW", "IN_PROGRESS", "BLOCKED", "COMPLETED", "ARCHIVED"])
+    .optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  assignedToId: z.string().uuid().optional().nullable(),
+  description: z.string().optional().nullable(),
+});
 
 export async function GET(
   request: NextRequest,
@@ -15,6 +25,10 @@ export async function GET(
     }
 
     const { id } = await params;
+    const idCheck = z.string().uuid().safeParse(id);
+    if (!idCheck.success) {
+      return NextResponse.json({ error: "Invalid task id" }, { status: 400 });
+    }
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, id),
       with: {
@@ -68,8 +82,30 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const idCheck = z.string().uuid().safeParse(id);
+    if (!idCheck.success) {
+      return NextResponse.json({ error: "Invalid task id" }, { status: 400 });
+    }
     const body = await request.json();
-    const { status, priority, assignedToId, description } = body;
+    const parsedBody = updateTaskSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+    const { status, priority, assignedToId, description } = parsedBody.data;
+    if (
+      status === undefined &&
+      priority === undefined &&
+      assignedToId === undefined &&
+      description === undefined
+    ) {
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 }
+      );
+    }
 
     // Get current task to compare changes
     const currentTask = await db.query.tasks.findFirst({
@@ -85,7 +121,7 @@ export async function PATCH(
       .set({
         status,
         priority,
-        assignedToId,
+        assignedToId: assignedToId || null,
         description,
         updatedAt: new Date(),
       })

@@ -79,6 +79,5 @@ const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
 
 export async function auth() {
-  const session = await getServerSession(authOptions);
-  return session as any;
+  return await getServerSession(authOptions);
 }

@@ -3,12 +3,23 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  role: z.enum(["ADMIN", "MANAGER", "STAFF"]),
+  password: z.string().min(8),
+});
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const allUsers = await db.query.users.findMany({
@@ -39,14 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, name, role, password } = body;
-
-    if (!email || !name || !role || !password) {
+    const parsedBody = createUserSchema.safeParse(body);
+    if (!parsedBody.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid request body" },
         { status: 400 }
       );
     }
+    const { email, name, role, password } = parsedBody.data;
 
     // Check if user exists
     const existing = await db.query.users.findFirst({

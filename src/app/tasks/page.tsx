@@ -76,7 +76,7 @@ export default function TasksPage() {
               {["ADMIN", "MANAGER"].includes(session?.user?.role || "") && (
                 <Link
                   href="/tasks/new"
-                  className="px-6 py-3 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                  className="px-6 py-3 bg-gray-800 text-white hover:text-white focus:text-white visited:text-white rounded-lg font-semibold hover:bg-gray-900 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 !text-white hover:!text-white"
                 >
                   + New Task
                 </Link>
